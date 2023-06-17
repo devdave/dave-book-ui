@@ -1,15 +1,14 @@
 import {modals} from "@mantine/modals";
 import {Button, Group, TextInput} from "@mantine/core";
 import React from "react";
-import {GenerateRandomString} from "./utils.ts";
+import {GenerateRandomString} from "./utils";
 
 type Callback<Type> = (arg:Type) => void;
 
-export class InputModal {
+class InputModal {
 
     modalId: string
     constructor() {
-
         this.modalId = GenerateRandomString(12);
     }
 
@@ -59,3 +58,5 @@ export class InputModal {
     }
 
 }
+
+export default InputModal;
