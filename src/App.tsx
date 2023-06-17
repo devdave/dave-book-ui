@@ -2,7 +2,7 @@ import {ThemeProvider} from './ThemeProvider'
 import {Book} from './Book'
 import {useEffect, useState} from "react";
 import {unset} from "lodash";
-import Boundary, {PYWEBVIEWREADY} from "./lib/boundary.ts";
+import Boundary, {PYWEBVIEWREADY} from "./lib/boundary";
 import {LoadingOverlay} from "@mantine/core";
 
 
