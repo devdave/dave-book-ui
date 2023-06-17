@@ -2,6 +2,8 @@ import {ThemeProvider} from './ThemeProvider'
 import {Book} from './Book'
 import {useEffect, useState} from "react";
 import {unset} from "lodash";
+import {ModalsProvider} from "@mantine/modals";
+
 import Boundary, {PYWEBVIEWREADY} from "./lib/boundary";
 import {LoadingOverlay} from "@mantine/core";
 
@@ -36,9 +38,12 @@ export default function App() {
         )
     }
 
+    //Next step would be to show a Modal list "Use last book", "select another book", "Create a book"
     return (
-        <ThemeProvider>
-            <Book/>
-        </ThemeProvider>
+        <ModalsProvider>
+            <ThemeProvider>
+                <Book/>
+            </ThemeProvider>
+        </ModalsProvider>
     )
 }
