@@ -1,4 +1,4 @@
-import {Deferred} from "./deferred.ts";
+import {Deferred} from "./deferred";
 
 type defferedCallback = (...args:any[]) => any | void;
 type defferedCallbacks = {[key: string]: defferedCallback };
