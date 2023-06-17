@@ -81,7 +81,7 @@ export const LeftPanel: FC<LeftPanelProps> = () => {
                           }
                           label={
                             <Group noWrap>
-                              <Text weight='bold'>{chapter.sequence}.</Text>
+                              <Text weight='bold'>{chapter.order}.</Text>
                               <Text>{chapter.title}</Text>
                             </Group>
                           }
@@ -111,7 +111,7 @@ export const LeftPanel: FC<LeftPanelProps> = () => {
                                     pl='xl'
                                   >
                                     <Text weight='bold'>
-                                      {chapter.sequence}.{scene.sequence}.
+                                      {chapter.order}.{scene.order}.
                                     </Text>
                                     <Text>{scene.title}</Text>
                                   </Group>

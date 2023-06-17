@@ -24,7 +24,7 @@ export const RightPanel: FC<RightPanelProps> = () => {
 
     return (
         <Stack spacing='xs'>
-            <Title order={4}>Chapter {activeChapter.sequence}</Title>
+            <Title order={4}>Chapter {activeChapter.order}</Title>
             <ChapterForm chapter={activeChapter}/>
             <Group
                 position='apart'
@@ -99,7 +99,7 @@ export const RightPanel: FC<RightPanelProps> = () => {
                                                         </Center>
                                                     }
                                                 >
-                                                    <Text weight='bold'>Scene {scene.sequence}</Text>
+                                                    <Text weight='bold'>Scene {scene.order}</Text>
                                                 </Accordion.Control>
                                                 <Accordion.Panel>
                                                     <ScenePanel scene={scene}/>
