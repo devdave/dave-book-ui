@@ -1,5 +1,5 @@
-import {Switchboard} from "./switchboard.ts";
-import {Deferred} from "./deferred.js";
+import {Switchboard} from "./switchboard";
+import {Deferred} from "./deferred";
 
 
 type remoteMethod = (...args:any[]) => any | void;
