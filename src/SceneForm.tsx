@@ -8,8 +8,7 @@ import {type Scene} from './types'
 import {useDebouncedEffect} from './useDebouncedEffect'
 
 const formSchema = z.object({
-    summary: z.string().trim().nonempty('Cannot be empty'),
-    title: z.string().trim().nonempty('Cannot be empty').min(10, 'Must be at least 10 characters')
+    title: z.string().trim().nonempty('Cannot be empty').min(3, 'Must be at least 3 characters')
 })
 
 export interface SceneFormProps {
@@ -29,6 +28,7 @@ export const SceneForm: FC<SceneFormProps> = ({scene}) => {
 
     useDebouncedEffect(
         () => {
+            console.log(form.values, form.isDirty(), form.isValid());
             if (form.isDirty() && form.isValid()) {
                 updateScene({
                     ...scene,
@@ -57,11 +57,10 @@ export const SceneForm: FC<SceneFormProps> = ({scene}) => {
                 autosize
                 label='Summary'
                 minRows={4}
-                required
                 spellCheck
                 {...form.getInputProps('summary')}
             />
-            <a id={`scrollTo-${scene.id}`} />
+            <br/>
         </>
     )
 }
