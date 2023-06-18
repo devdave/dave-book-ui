@@ -10,8 +10,8 @@ import {
     useMantineColorScheme
 } from '@mantine/core'
 import {IconSun, IconMoonStars} from '@tabler/icons-react'
-import {clone, find, map, range} from 'lodash'
-import {LoremIpsum} from 'lorem-ipsum'
+import {clone, find, map} from 'lodash'
+
 import {FC, useCallback, useEffect, useMemo, useState} from 'react'
 
 import InputModal, {PromptModal} from "./lib/input_modal";
@@ -23,42 +23,7 @@ import {type Chapter, type Scene} from './types'
 import APIBridge from "./lib/remote";
 import Boundary from "./lib/boundary";
 
-const loremIpsum = new LoremIpsum()
-// const randomId = () => Math.random().toString(36).slice(2, 11)
-const createScene = (chapterId: string, sceneId:string, sceneTitle:string, order = 1): Scene => (
-    {
-        chapterId,
-        id: sceneId,
-        order,
-        summary: "",
-        content: "",
-        notes: "",
-        title: sceneTitle,
-        words: 0
-    });
 
-const createChapter = (chapterTitle: string, chapterId: string, order = 1): Chapter => {
-
-
-    return {
-        id: chapterId,
-        order,
-        scenes: [],
-        notes: "",
-        summary: loremIpsum.generateSentences(3),
-        title: chapterTitle,
-        words: 0
-    }
-}
-
-// const data = map<number, Chapter>(range(1, 20), (chapterIdx) => {
-//     const chapter = createChapter(chapterIdx)
-//
-//     return {
-//         ...chapter,
-//         scenes: map<number, Scene>(range(1, 10), (sceneIdx) => createScene(chapter.id, sceneIdx))
-//     }
-// })
 
 const useStyles = createStyles((theme) => ({
     main: {
