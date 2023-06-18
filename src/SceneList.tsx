@@ -1,5 +1,5 @@
 import {Accordion, ActionIcon, Center, createStyles, Group, Text, Title} from "@mantine/core";
-import {useCallback} from "react";
+import {useCallback, useEffect, useRef} from "react";
 import {IconGripVertical, IconPlus} from "@tabler/icons-react";
 import {find, map} from "lodash";
 import {DragDropContext, Draggable, Droppable} from "react-beautiful-dnd";
@@ -17,7 +17,17 @@ const SceneList = () => {
 
     const {activeChapter, activeScene, addScene, reorderScene, setActiveScene} = useBookContext()
     const {classes} = useStyles();
+    const accordionRefs = useRef<Record<string, HTMLDivElement>>({});
 
+    useEffect(() => {
+        if (activeScene) {
+            accordionRefs.current[activeScene.id]?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'end',
+                inline: 'nearest'
+            })
+        }
+    }, [activeScene?.id]);
 
 
     if (activeChapter === null) {
@@ -35,8 +45,6 @@ const SceneList = () => {
             </Group>
         )
     }
-
-    console.log("Rendering scene list", activeChapter?.scenes);
 
     return (
 
@@ -85,8 +93,14 @@ const SceneList = () => {
                                 >
                                     {(draggable) => (
                                         <Accordion.Item
-                                            ref={draggable.innerRef}
+                                            ref={(ref) => {
+                                                draggable.innerRef(ref);
+                                                if (ref) {
+                                                    accordionRefs.current[scene.id] = ref;
+                                                }
+                                            }}
                                             value={scene.id}
+
                                             {...draggable.draggableProps}
                                         >
                                             <Accordion.Control
@@ -96,10 +110,10 @@ const SceneList = () => {
                                                     </Center>
                                                 }
                                             >
-                                                <Text weight='bold'>Scene {scene.order}</Text>
+                                                <Text weight='bold'>Scene #{scene.order}</Text>
                                             </Accordion.Control>
                                             <Accordion.Panel>
-                                                <ScenePanel scene={scene}/>
+                                                <ScenePanel key={scene.id} scene={scene}/>
                                             </Accordion.Panel>
                                         </Accordion.Item>
                                     )}
