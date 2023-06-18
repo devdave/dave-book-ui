@@ -59,7 +59,6 @@ export const ChapterForm: FC<ChapterFormProps> = ({ chapter }) => {
         autosize
         label='Summary'
         minRows={4}
-        required
         spellCheck
         {...form.getInputProps('summary')}
       />
