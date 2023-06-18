@@ -6,10 +6,10 @@ import z from 'zod'
 import { useBookContext } from './Book.context'
 import { type Chapter } from './types'
 import { useDebouncedEffect } from './useDebouncedEffect'
+import {iconSizes} from "@mantine/core/lib/Stepper/Step/Step.styles";
 
 const formSchema = z.object({
-  summary: z.string().trim().nonempty('Cannot be empty'),
-  title: z.string().trim().nonempty('Cannot be empty').min(10, 'Must be at least 10 characters')
+  title: z.string().trim().nonempty('Cannot be empty').min(4, 'Must be at least 4 characters')
 })
 
 export interface ChapterFormProps {
@@ -29,7 +29,10 @@ export const ChapterForm: FC<ChapterFormProps> = ({ chapter }) => {
 
   useDebouncedEffect(
     () => {
+        console.log("Checking if need to update chapter", form.isDirty());
+
       if (form.isDirty() && form.isValid()) {
+
         updateChapter({
           ...chapter,
           ...form.values

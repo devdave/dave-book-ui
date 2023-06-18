@@ -1,31 +1,43 @@
-import {AppShell, Box, createStyles, Group, Header, Switch, Title, useMantineColorScheme} from '@mantine/core'
+import {
+    AppShell,
+    Box,
+    createStyles,
+    Group,
+    Header,
+    LoadingOverlay,
+    Switch,
+    Title,
+    useMantineColorScheme
+} from '@mantine/core'
 import {IconSun, IconMoonStars} from '@tabler/icons-react'
 import {clone, find, map, range} from 'lodash'
 import {LoremIpsum} from 'lorem-ipsum'
-import {useCallback, useMemo, useState} from 'react'
+import {FC, useCallback, useEffect, useMemo, useState} from 'react'
 
 import {GenerateRandomString} from "./lib/utils";
-import InputModal from "./lib/input_modal";
+import InputModal, {PromptModal} from "./lib/input_modal";
 
 import {BookContext} from './Book.context'
 import {LeftPanel} from './LeftPanel'
 import {RightPanel} from './RightPanel'
 import {type Chapter, type Scene} from './types'
+import APIBridge from "./lib/remote";
+import Boundary from "./lib/boundary";
 
 const loremIpsum = new LoremIpsum()
-const randomId = () => Math.random().toString(36).slice(2, 11)
-const createScene = (chapterId: string, order = 1): Scene => (
+// const randomId = () => Math.random().toString(36).slice(2, 11)
+const createScene = (chapterId: string, sceneId:string, sceneTitle:string, order = 1): Scene => (
     {
         chapterId,
-        id: GenerateRandomString(12),
+        id: sceneId,
         order,
-        summary: loremIpsum.generateSentences(3),
-        title: loremIpsum.generateWords(3),
+        summary: "",
+        title: sceneTitle,
         words: 0
     });
 
-const createChapter = (order = 1): Chapter => {
-    const chapterId = randomId()
+const createChapter = (chapterTitle: string, chapterId: string, order = 1): Chapter => {
+
 
     return {
         id: chapterId,
@@ -33,19 +45,19 @@ const createChapter = (order = 1): Chapter => {
         scenes: [],
         notes: "",
         summary: loremIpsum.generateSentences(3),
-        title: loremIpsum.generateWords(3),
+        title: chapterTitle,
         words: 0
     }
 }
 
-const data = map<number, Chapter>(range(1, 20), (chapterIdx) => {
-    const chapter = createChapter(chapterIdx)
-
-    return {
-        ...chapter,
-        scenes: map<number, Scene>(range(1, 10), (sceneIdx) => createScene(chapter.id, sceneIdx))
-    }
-})
+// const data = map<number, Chapter>(range(1, 20), (chapterIdx) => {
+//     const chapter = createChapter(chapterIdx)
+//
+//     return {
+//         ...chapter,
+//         scenes: map<number, Scene>(range(1, 10), (sceneIdx) => createScene(chapter.id, sceneIdx))
+//     }
+// })
 
 const useStyles = createStyles((theme) => ({
     main: {
@@ -53,35 +65,65 @@ const useStyles = createStyles((theme) => ({
     }
 }))
 
-export const Book = () => {
+interface BookProps {
+    title: string
+    bookId: number
+}
+
+export const Book: React.FC<BookProps> = ({title: bookTitle, bookId}) => {
     const {classes, theme} = useStyles()
     const {colorScheme, toggleColorScheme} = useMantineColorScheme()
-    const [chapters, _setChapters] = useState<Chapter[]>(data)
-    const [activeChapter, _setActiveChapter] = useState(data[0])
-    const [activeScene, _setActiveScene] = useState(data[0].scenes[0])
+    const [fetchedBook, setFetchedBook] = useState(false);
+    const [chapters, _setChapters] = useState<Chapter[]>([]);
+    const [activeChapter, _setActiveChapter] = useState<Chapter|undefined>(undefined);
+    const [activeScene, _setActiveScene] = useState<Scene|undefined>(undefined);
+
+    const boundary = new Boundary()
+    const api = new APIBridge(boundary);
+
 
     const addChapter = useCallback(
-        () =>
-            _setChapters((prevChapters) => {
-                const chapter = createChapter(prevChapters.length + 1)
-                const scene = createScene(chapter.id)
+        async () => {
 
-                chapter.scenes.push(scene)
+            const chapterTitle: string = await PromptModal("New chapter title");
+            if(chapterTitle.trim().length <= 2){
+                alert("Chapter's must have a title longer than 2 characters.");
+                return;
+            }
+            const chapterId = await api.create_chapter(chapterTitle);
+
+
+
+            _setChapters((prevChapters) => {
+                const chapter = createChapter(chapterTitle, chapterId, chapters.length + 1)
+                // const scene = createScene(chapter.id)
+
+                // chapter.scenes.push(scene)
 
                 _setActiveChapter(chapter)
-                _setActiveScene(scene)
+                // _setActiveScene(scene)
 
                 return [...prevChapters, chapter]
-            }),
+            });
+        },
         []
     )
 
     const addScene = useCallback(
-        (chapterId: string) =>
+        async (chapterId: string) => {
+
+            const sceneTitle: string = await PromptModal("New scene title");
+            if (sceneTitle.trim().length <= 2) {
+                alert("Scene's must have a title longer than 2 characters.");
+                return;
+            }
+            const newScene = await api.create_scene(chapterId, sceneTitle);
+
+
             _setChapters((prevChapters) =>
                 map(prevChapters, (chapter) => {
                     if (chapter.id === chapterId) {
-                        const scene = createScene(chapter.id, chapter.scenes.length + 1)
+                        const scene = newScene; //createScene(chapter.id, sceneId, sceneTitle, chapter.scenes.length + 1)
                         const updatedChapter: Chapter = {
                             ...chapter,
                             scenes: [...chapter.scenes, scene]
@@ -95,7 +137,9 @@ export const Book = () => {
 
                     return chapter
                 })
-            ),
+            );
+
+        },
         []
     )
     const getChapter = useCallback((chapterId: string) => find(chapters, ['id', chapterId]), [chapters])
@@ -111,7 +155,7 @@ export const Book = () => {
                 // iterate over each item and overwrite its new sequence
                 return map(nextChapters, (chapter, chapterIdx) => ({
                     ...chapter,
-                    sequence: chapterIdx + 1
+                    order: chapterIdx + 1
                 }))
             }),
         []
@@ -132,7 +176,7 @@ export const Book = () => {
                             // iterate over each item and overwrite its new sequence
                             scenes: map(nextScenes, (scene, sceneIdx) => ({
                                 ...scene,
-                                sequence: sceneIdx + 1
+                                order: sceneIdx + 1
                             }))
                         }
 
@@ -150,17 +194,36 @@ export const Book = () => {
         _setActiveChapter(chapter)
         _setActiveScene(chapter.scenes[0])
     }, [])
+
     const setActiveScene = useCallback((chapter: Chapter, scene: Scene) => {
-        _setActiveChapter(chapter)
-        _setActiveScene(scene)
-    }, [])
+        _setActiveChapter(chapter);
+        _setActiveScene(scene);
+
+        const elementId = `scrollTo-${scene.id}`;
+        const element = document.getElementById(elementId);
+        console.log("Attempting to scroll to! ", elementId, element);
+        if(element){
+            setTimeout(()=>element.scrollTo({behavior:"smooth"}), 500);
+        }
+    }, []);
+
     const updateChapter = useCallback(
-        (chapter: Chapter) =>
+        async (chapter: Chapter) => {
+
+            const result = await api.update_chapter(chapter.id, chapter);
+            if(result === false){
+                alert("Warning!  Failed to save chapter changes.")
+            }
+
+            console.log("Would update chapter with ", chapter);
+
             _setChapters((prevChapters) =>
                 map(prevChapters, (prevChapter) => (prevChapter.id === chapter.id ? chapter : prevChapter))
-            ),
-        []
-    )
+            );
+        },
+
+        []);
+
     const updateScene = useCallback(
         (scene: Scene) => {
             const chapter = getChapter(scene.chapterId)
@@ -173,7 +236,9 @@ export const Book = () => {
             }
         },
         [getChapter, updateChapter]
-    )
+    );
+
+    const onToggleColorScheme = useCallback(() => toggleColorScheme(), [toggleColorScheme])
 
     const bookContextValue = useMemo(
         () => ({
@@ -202,7 +267,29 @@ export const Book = () => {
             updateChapter,
             updateScene
         ]
-    )
+    );
+
+    useEffect(() => {
+        const fetchChapters = async () => {
+            const fetchedData: Chapter[] = await api.fetch_chapters();
+
+            _setChapters(fetchedData);
+            if(fetchedData.length > 0){
+                _setActiveChapter(fetchedData[0])
+            }
+
+        }
+
+        fetchChapters().then(() => setFetchedBook(true));
+
+
+    }, []);
+
+    if (fetchedBook === false) {
+        return (
+            <LoadingOverlay visible={true}/>
+        );
+    }
 
     return (
         <BookContext.Provider value={bookContextValue}>
@@ -220,10 +307,10 @@ export const Book = () => {
                             h={60}
                             px='xs'
                         >
-                            <Title order={1}>Book Title</Title>
+                            <Title order={1}>{bookTitle}</Title>
                             <Switch
                                 checked={colorScheme === 'dark'}
-                                onChange={useCallback(() => toggleColorScheme(), [toggleColorScheme])}
+                                onChange={onToggleColorScheme}
                                 size='lg'
                                 onLabel={
                                     <IconMoonStars
@@ -249,7 +336,14 @@ export const Book = () => {
                     px='md'
                     py='sm'
                 >
-                    <RightPanel key={`${activeChapter.id}-${activeScene.id}`}/>
+                    {activeChapter !== null && activeScene !== null &&
+                        <RightPanel key={`${activeChapter?.id}-${activeScene?.id}`}/>
+                    }
+                    {activeChapter === null &&
+                        <>
+                            <div>Create a chapter!</div>
+                        </>
+                    }
                 </Box>
             </AppShell>
         </BookContext.Provider>

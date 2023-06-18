@@ -50,6 +50,12 @@ class APIBridge {
     }
     
     
+    async update_chapter( chapter_id:string, chapter_data:string, ) {
+        
+        return await this.boundary.remote("update_chapter", chapter_id, chapter_data, );
+    }
+    
+    
     async fetch_stripped_chapters( ) {
         
         return await this.boundary.remote("fetch_stripped_chapters", );
@@ -74,9 +80,9 @@ class APIBridge {
     }
     
     
-    async create_scene( chapter_uid:string, scene_name:string, ) {
+    async create_scene( chapter_uid:string, scene_title:string, ) {
         
-        return await this.boundary.remote("create_scene", chapter_uid, scene_name, );
+        return await this.boundary.remote("create_scene", chapter_uid, scene_title, );
     }
     
     

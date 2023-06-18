@@ -3,9 +3,9 @@ import { createContext, useContext } from 'react'
 import { type Chapter, type Scene } from './types'
 
 interface BookContextValue {
-  activeChapter: Chapter
-  activeScene: Scene
-  chapters: Chapter[]
+  activeChapter: Chapter | undefined
+  activeScene: Scene | undefined
+  chapters: Chapter[] | undefined
   addChapter(): void
   addScene(chapterId: string): void
   reorderChapter(from: number, to: number): void

@@ -62,7 +62,7 @@ export const LeftPanel: FC<LeftPanelProps> = () => {
                 ref={droppable.innerRef}
               >
                 {map(chapters, (chapter, chapterIdx) => {
-                  const isChapterActive = chapter.id === activeChapter.id
+                  const isChapterActive = chapter.id === activeChapter?.id
 
                   return (
                     <Draggable
@@ -98,7 +98,7 @@ export const LeftPanel: FC<LeftPanelProps> = () => {
                           {...draggable.draggableProps}
                         >
                           {map(chapter.scenes, (scene) => {
-                            const isSceneActive = scene.id === activeScene.id
+                            const isSceneActive = scene.id === activeScene?.id
 
                             return (
                               <NavLink
