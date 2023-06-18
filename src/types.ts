@@ -12,6 +12,8 @@ export interface Scene {
   chapterId: string
   title: string
   summary: string
+  content: string
+  notes: string
   order: number
   words: number
 }
