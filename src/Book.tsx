@@ -14,7 +14,6 @@ import {clone, find, map, range} from 'lodash'
 import {LoremIpsum} from 'lorem-ipsum'
 import {FC, useCallback, useEffect, useMemo, useState} from 'react'
 
-import {GenerateRandomString} from "./lib/utils";
 import InputModal, {PromptModal} from "./lib/input_modal";
 
 import {BookContext} from './Book.context'
@@ -32,6 +31,8 @@ const createScene = (chapterId: string, sceneId:string, sceneTitle:string, order
         id: sceneId,
         order,
         summary: "",
+        content: "",
+        notes: "",
         title: sceneTitle,
         words: 0
     });
@@ -90,20 +91,23 @@ export const Book: React.FC<BookProps> = ({title: bookTitle, bookId}) => {
                 alert("Chapter's must have a title longer than 2 characters.");
                 return;
             }
-            const chapterId = await api.create_chapter(chapterTitle);
+            const newChapter = await api.create_chapter(chapterTitle);
 
 
 
             _setChapters((prevChapters) => {
-                const chapter = createChapter(chapterTitle, chapterId, chapters.length + 1)
+                // const chapter = createChapter(chapterTitle, chapterId, chapters.length + 1)
+
                 // const scene = createScene(chapter.id)
 
                 // chapter.scenes.push(scene)
 
-                _setActiveChapter(chapter)
-                // _setActiveScene(scene)
+                _setActiveChapter(newChapter)
+                if(newChapter.scenes.length > 0 ) {
+                   _setActiveScene(newChapter.scenes[0]);
+                }
 
-                return [...prevChapters, chapter]
+                return [...prevChapters, newChapter]
             });
         },
         []
@@ -111,6 +115,8 @@ export const Book: React.FC<BookProps> = ({title: bookTitle, bookId}) => {
 
     const addScene = useCallback(
         async (chapterId: string) => {
+
+            console.log("addScene chapter.id=", chapterId);
 
             const sceneTitle: string = await PromptModal("New scene title");
             if (sceneTitle.trim().length <= 2) {
@@ -199,12 +205,6 @@ export const Book: React.FC<BookProps> = ({title: bookTitle, bookId}) => {
         _setActiveChapter(chapter);
         _setActiveScene(scene);
 
-        const elementId = `scrollTo-${scene.id}`;
-        const element = document.getElementById(elementId);
-        console.log("Attempting to scroll to! ", elementId, element);
-        if(element){
-            setTimeout(()=>element.scrollTo({behavior:"smooth"}), 500);
-        }
     }, []);
 
     const updateChapter = useCallback(
@@ -212,7 +212,8 @@ export const Book: React.FC<BookProps> = ({title: bookTitle, bookId}) => {
 
             const result = await api.update_chapter(chapter.id, chapter);
             if(result === false){
-                alert("Warning!  Failed to save chapter changes.")
+                alert("Warning!  Failed to save chapter changes.");
+                return;
             }
 
             console.log("Would update chapter with ", chapter);
@@ -225,8 +226,17 @@ export const Book: React.FC<BookProps> = ({title: bookTitle, bookId}) => {
         []);
 
     const updateScene = useCallback(
-        (scene: Scene) => {
-            const chapter = getChapter(scene.chapterId)
+        async (scene: Scene) => {
+            console.log("updateScene", scene);
+
+            const chapter = getChapter(scene.chapterId);
+
+            const result = await api.update_scene(scene.id, scene);
+
+            if (result !== true){
+                alert("Failed to update scene!");
+                return;
+            }
 
             if (chapter) {
                 updateChapter({
@@ -276,6 +286,9 @@ export const Book: React.FC<BookProps> = ({title: bookTitle, bookId}) => {
             _setChapters(fetchedData);
             if(fetchedData.length > 0){
                 _setActiveChapter(fetchedData[0])
+                if(fetchedData[0].scenes.length >0){
+                    _setActiveScene(fetchedData[0].scenes[0]);
+                }
             }
 
         }
