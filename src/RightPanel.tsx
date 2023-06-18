@@ -1,7 +1,7 @@
 import {Accordion, ActionIcon, Center, createStyles, Group, Stack, Text, Title} from '@mantine/core'
 import {IconGripVertical, IconPlus} from '@tabler/icons-react'
 import {find, map} from 'lodash'
-import {type FC, useCallback} from 'react'
+import {type FC, useCallback, useRef} from 'react'
 import {DragDropContext, Draggable, Droppable} from 'react-beautiful-dnd'
 
 import {useBookContext} from './Book.context'
@@ -22,7 +22,8 @@ export interface RightPanelProps {
 
 export const RightPanel: FC<RightPanelProps> = () => {
     const {activeChapter, activeScene, addScene, reorderScene, setActiveScene} = useBookContext()
-    const {classes} = useStyles()
+
+    //const {classes} = useStyles()
 
     if (activeChapter === undefined) {
         return (
@@ -35,7 +36,7 @@ export const RightPanel: FC<RightPanelProps> = () => {
 
     return (
         <Stack spacing='xs'>
-            <Title order={4}>Chapter {activeChapter.order}</Title>
+            <Title order={4}>Chapter {activeChapter.order+1}</Title>
             <ChapterForm chapter={activeChapter}/>
             <Group
                 position='apart'
@@ -56,8 +57,6 @@ export const RightPanel: FC<RightPanelProps> = () => {
                 </ActionIcon>
             </Group>
             <SceneList/>
-
-
         </Stack>
     )
 }
