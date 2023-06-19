@@ -1,6 +1,6 @@
-import {Accordion, ActionIcon, Center, createStyles, Group, Text, Title} from "@mantine/core";
+import {Accordion, Center, createStyles, Group, Text, Title} from "@mantine/core";
 import {useCallback, useEffect, useRef} from "react";
-import {IconGripVertical, IconPlus} from "@tabler/icons-react";
+import {IconGripVertical} from "@tabler/icons-react";
 import {find, map} from "lodash";
 import {DragDropContext, Draggable, Droppable} from "react-beautiful-dnd";
 import {ScenePanel} from "./ScenePanel";
@@ -15,7 +15,7 @@ const useStyles = createStyles((theme) => ({
 
 const SceneList = () => {
 
-    const {activeChapter, activeScene, addScene, reorderScene, setActiveScene} = useBookContext()
+    const {activeChapter, activeScene, reorderScene, setActiveScene} = useBookContext()
     const {classes} = useStyles();
     const accordionRefs = useRef<Record<string, HTMLDivElement>>({});
 
@@ -38,7 +38,7 @@ const SceneList = () => {
         )
     }
 
-    if (activeScene === undefined || activeChapter?.scenes?.length <= 0) {
+    if (activeScene === undefined || activeChapter === undefined || activeChapter?.scenes?.length <= 0) {
         return (
             <Group position="center">
                 <h2>Create a new scene</h2>
@@ -57,10 +57,12 @@ const SceneList = () => {
             }}
             onChange={useCallback(
                 (sceneId: string) => {
-                    const scene = find(activeChapter.scenes, ['id', sceneId])
+                    if(activeChapter) {
+                        const scene = find(activeChapter.scenes, ['id', sceneId])
 
-                    if (scene) {
-                        setActiveScene(activeChapter, scene)
+                        if (scene) {
+                            setActiveScene(activeChapter, scene)
+                        }
                     }
                 },
                 [activeChapter, setActiveScene]
@@ -72,10 +74,12 @@ const SceneList = () => {
                 onDragEnd={useCallback(
                     ({destination, source}) => {
                         if (destination && destination.index !== source.index) {
-                            reorderScene(activeChapter.id, source.index, destination.index)
+                            if(activeChapter){
+                                reorderScene(activeChapter.id, source.index, destination.index)
+                            }
                         }
                     },
-                    [activeChapter.id, reorderScene]
+                    [activeChapter?.id, reorderScene]
                 )}
             >
                 <Droppable droppableId='scene-list'>
@@ -84,7 +88,7 @@ const SceneList = () => {
                             {...droppable.droppableProps}
                             ref={droppable.innerRef}
                         >
-                            {map(activeChapter.scenes, (scene, sceneIdx) => (
+                            {map(activeChapter?.scenes, (scene, sceneIdx) => (
 
                                 <Draggable
                                     draggableId={scene.id}
