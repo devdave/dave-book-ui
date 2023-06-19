@@ -26,6 +26,12 @@ class APIBridge {
     }
     
     
+    async get_current_book( ) {
+        
+        return await this.boundary.remote("get_current_book", );
+    }
+    
+    
     async find_source( ) {
         
         return await this.boundary.remote("find_source", );
