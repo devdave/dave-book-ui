@@ -7,6 +7,7 @@ import {ModalsProvider} from "@mantine/modals";
 import InputModal from "./lib/input_modal";
 import Boundary, {PYWEBVIEWREADY} from "./lib/boundary";
 import {LoadingOverlay} from "@mantine/core";
+import APIBridge from "./lib/remote";
 
 
 declare global {
@@ -18,11 +19,24 @@ declare global {
 
 export default function App() {
     const [isReady, setIsReady] = useState(false);
-    const [hasBookTitle, setBookTitle] = useState(false);
+    const [bookTitle, setBookTitle] = useState(undefined);
+    const [bookId, setBookId] = useState(undefined);
 
-    const doReady = () => {
+
+    const boundary = new Boundary()
+    const api = new APIBridge(boundary);
+
+
+
+    const doReady = async () => {
+
+        const bookData = await api.get_current_book();
+        setBookId(bookData.id);
+        setBookTitle(bookData.title);
+
         setIsReady(true);
         window.removeEventListener(PYWEBVIEWREADY, doReady);
+
     }
 
     useEffect(() => {
@@ -40,7 +54,7 @@ export default function App() {
         )
     }
 
-    const bookTitle:string = "Placeholder Book Title";
+
 
 
 
@@ -49,7 +63,7 @@ export default function App() {
     return (
         <ModalsProvider>
             <ThemeProvider>
-                <Book title={bookTitle} bookId={0}/>
+                <Book api={api} bookId={bookId} bookTitle={bookTitle}/>
             </ThemeProvider>
         </ModalsProvider>
     )
