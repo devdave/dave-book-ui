@@ -10,7 +10,7 @@ import {
     useMantineColorScheme
 } from '@mantine/core'
 import {IconSun, IconMoonStars} from '@tabler/icons-react'
-import {clone, find, map} from 'lodash'
+import {clone, find, forEach, map} from 'lodash'
 
 import {FC, useCallback, useEffect, useMemo, useState} from 'react'
 
@@ -24,7 +24,6 @@ import APIBridge from "./lib/remote";
 import Boundary from "./lib/boundary";
 
 
-
 const useStyles = createStyles((theme) => ({
     main: {
         backgroundColor: theme.colorScheme === 'light' ? theme.colors.gray[0] : theme.colors.dark[6]
@@ -32,32 +31,30 @@ const useStyles = createStyles((theme) => ({
 }))
 
 interface BookProps {
-    title: string
-    bookId: number
+    api: APIBridge
+    bookId: string | undefined
+    bookTitle: string | undefined
 }
 
-export const Book: React.FC<BookProps> = ({title: bookTitle, bookId}) => {
+export const Book: React.FC<BookProps> = ({api, bookId, bookTitle}) => {
+
     const {classes, theme} = useStyles()
     const {colorScheme, toggleColorScheme} = useMantineColorScheme()
     const [fetchedBook, setFetchedBook] = useState(false);
     const [chapters, _setChapters] = useState<Chapter[]>([]);
-    const [activeChapter, _setActiveChapter] = useState<Chapter|undefined>(undefined);
-    const [activeScene, _setActiveScene] = useState<Scene|undefined>(undefined);
-
-    const boundary = new Boundary()
-    const api = new APIBridge(boundary);
+    const [activeChapter, _setActiveChapter] = useState<Chapter | undefined>(undefined);
+    const [activeScene, _setActiveScene] = useState<Scene | undefined>(undefined);
 
 
     const addChapter = useCallback(
         async () => {
 
             const chapterTitle: string = await PromptModal("New chapter title");
-            if(chapterTitle.trim().length <= 2){
+            if (chapterTitle.trim().length <= 2) {
                 alert("Chapter's must have a title longer than 2 characters.");
                 return;
             }
             const newChapter = await api.create_chapter(chapterTitle);
-
 
 
             _setChapters((prevChapters) => {
@@ -68,8 +65,8 @@ export const Book: React.FC<BookProps> = ({title: bookTitle, bookId}) => {
                 // chapter.scenes.push(scene)
 
                 _setActiveChapter(newChapter)
-                if(newChapter.scenes.length > 0 ) {
-                   _setActiveScene(newChapter.scenes[0]);
+                if (newChapter.scenes.length > 0) {
+                    _setActiveScene(newChapter.scenes[0]);
                 }
 
                 return [...prevChapters, newChapter]
@@ -115,7 +112,7 @@ export const Book: React.FC<BookProps> = ({title: bookTitle, bookId}) => {
     )
     const getChapter = useCallback((chapterId: string) => find(chapters, ['id', chapterId]), [chapters])
     const reorderChapter = useCallback(
-        (from: number, to: number) =>
+        async (from: number, to: number) => {
             _setChapters((prevChapters) => {
                 // make a clone of the chapters array, so we don't mutate it in place
                 const nextChapters = clone(prevChapters)
@@ -126,9 +123,13 @@ export const Book: React.FC<BookProps> = ({title: bookTitle, bookId}) => {
                 // iterate over each item and overwrite its new sequence
                 return map(nextChapters, (chapter, chapterIdx) => ({
                     ...chapter,
-                    order: chapterIdx + 1
+                    order: chapterIdx
                 }))
-            }),
+            });
+
+            const response = await api.save_reordered_chapters(chapters);
+
+        },
         []
     )
     const reorderScene = useCallback(
@@ -161,7 +162,19 @@ export const Book: React.FC<BookProps> = ({title: bookTitle, bookId}) => {
             ),
         []
     )
-    const setActiveChapter = useCallback((chapter: Chapter) => {
+
+
+    const setActiveChapter = useCallback( async (chapter: Chapter) => {
+        if(activeChapter !== undefined){
+            activeChapter.notes = "";
+            activeChapter.summary = "";
+            forEach(activeChapter.scenes, (scene)=>{
+                scene.notes = "";
+                scene.content = "";
+                scene.summary = "";
+            })
+        }
+        chapter = await api.fetch_chapter(chapter.id);
         _setActiveChapter(chapter)
         _setActiveScene(chapter.scenes[0])
     }, [])
@@ -176,7 +189,7 @@ export const Book: React.FC<BookProps> = ({title: bookTitle, bookId}) => {
         async (chapter: Chapter) => {
 
             const result = await api.update_chapter(chapter.id, chapter);
-            if(result === false){
+            if (result === false) {
                 alert("Warning!  Failed to save chapter changes.");
                 return;
             }
@@ -198,13 +211,13 @@ export const Book: React.FC<BookProps> = ({title: bookTitle, bookId}) => {
 
             const result = await api.update_scene(scene.id, scene);
 
-            if (result !== true){
+            if (result !== true) {
                 alert("Failed to update scene!");
                 return;
             }
 
             if (chapter) {
-                updateChapter({
+                await updateChapter({
                     ...chapter,
                     scenes: map(chapter.scenes, (prevScene) => (prevScene.id === scene.id ? scene : prevScene))
                 })
@@ -246,12 +259,13 @@ export const Book: React.FC<BookProps> = ({title: bookTitle, bookId}) => {
 
     useEffect(() => {
         const fetchChapters = async () => {
-            const fetchedData: Chapter[] = await api.fetch_chapters();
+            const fetchedData: Chapter[] = await api.fetch_stripped_chapters();
 
             _setChapters(fetchedData);
-            if(fetchedData.length > 0){
+            if (fetchedData.length > 0) {
+                fetchedData[0] = await api.fetch_chapter(fetchedData[0].id);
                 _setActiveChapter(fetchedData[0])
-                if(fetchedData[0].scenes.length >0){
+                if (fetchedData[0].scenes.length > 0) {
                     _setActiveScene(fetchedData[0].scenes[0]);
                 }
             }
